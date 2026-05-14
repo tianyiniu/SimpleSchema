@@ -1,0 +1,70 @@
+[run]
+mode = "train"             # one-shot data collection is train-only
+corpus = "static"          # using static corpus (server must be running at port **7470**)
+results_dir = "results"
+
+[corpus_server]
+base_url = "http://localhost:7470"
+timeout_seconds = 60
+
+[llm.shared]
+max_workers = 8
+download_dir = "/nas-ssd2/tianyin4/cache/pretrained_models"
+
+# Orchestrator 
+[llm.orchestrator]
+provider = "vllm"
+model = "google/gemma-4-E2B-it"
+ip = "localhost"
+port = 7471
+api_key = "EMPTY"
+temperature = 0.7
+max_tokens = 4096
+enable_thinking = true
+
+# Agent LLM: Proposes schemas and executes schemas
+[llm.agent]
+provider = "vllm"
+model = "Qwen/Qwen3-14B"
+ip = "localhost"
+port = 7472
+api_key = "EMPTY"
+temperature = 0.7
+tool_calling_temperature = 0.5
+max_tokens = 16384
+enable_thinking = true
+max_workers = 40
+
+# Judge: Provides fitness score to each schema. Self-hosted on a separate
+[llm.judge]
+provider = "vllm"
+model = "openai/gpt-oss-120b"
+ip = "localhost"
+port = 7473
+api_key = "EMPTY"
+temperature = 0.3
+max_tokens = 16384
+enable_thinking = true
+max_workers = 16
+
+[tools]
+enabled = ["search_info", "fetch_url", "code_compute"]
+
+[oneshot]
+schemas_per_batch = 4      
+debate_mode = "persona"      # "persona" | "self_consistency" | "mixed"
+random_seed = 1004
+# How many (execute + dual-judge) pipelines to run in parallel per task.
+# Defaults to schemas_per_batch if unset.
+eval_workers = 4
+# How many tasks to process concurrently. While task A is in the
+# execute+judge phase, task B can be in the propose phase, smoothing out
+# serial points where the agent or judge would otherwise sit idle. Set
+# [llm.agent].max_workers >= task_workers * eval_workers * max_personas.
+task_workers = 2
+
+[data.train]
+sources = []
+num_samples = 2000
+sample_seed = 42
+path = "data/train/sample.jsonl"
