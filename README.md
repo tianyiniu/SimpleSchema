@@ -16,7 +16,6 @@ collection on `train_300` (150 NQ + 150 HotPotQA).
 
 ```bash
 python scripts/build_train.py
-# writes data/nq/train.jsonl, data/hotpotqa/train.jsonl,
 # data/train_300/train.jsonl, data/train_4/train.jsonl, data/train_hp_300/train.jsonl
 ```
 
@@ -42,6 +41,15 @@ The orchestrator slot is dormant for one-shot collection, so only the
 served via `openai` or `openrouter` by editing the matching
 `[llm.<role>]` section in `config.toml` (providers: `vllm` | `openai` |
 `openrouter` — Anthropic is not supported here).
+
+Before launching the servers, edit `config.toml` so the `[llm.agent]`
+and `[llm.judge]` sections reflect the models you actually want to run.
+The `model` field in each section is the **HuggingFace model ID**
+(e.g. `"Qwen/Qwen3-14B"`, `"openai/gpt-oss-120b"`), while the `-m`
+flag passed to `deploy_model.sh` is the **short deploy key** that the
+script uses to select the right port and reasoning-parser preset
+(e.g. `qwen3-14b`, `gpt-oss-120b`). These two identifiers must be
+kept in sync manually — the script does not read `config.toml`.
 
 ```bash
 # Agent (matches [llm.agent] in config.toml)
