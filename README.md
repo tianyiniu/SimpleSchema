@@ -7,6 +7,63 @@ model for debate schemas. The
 agent proposes schemas in two batches, executes them, and both scoring
 judges record their verdicts.
 
+## Quickstart
+
+End-to-end: build the train data, bring up the servers, run one-shot
+collection on `train_300` (150 NQ + 150 HotPotQA).
+
+### 1. Build the train dataset
+
+```bash
+python scripts/build_train.py
+# writes data/nq/train.jsonl, data/hotpotqa/train.jsonl,
+# data/train_300/train.jsonl, data/train_4/train.jsonl, data/train_hp_300/train.jsonl
+```
+
+### 2. Start the corpus server
+
+The static corpus server is launched **outside this package** and must
+be reachable at `[corpus_server].base_url` (default
+`http://localhost:7470`) before step 5.
+
+### 3. Start the LLM servers
+
+`scripts/deploy_model.sh` launches a vLLM server for one model. Supported
+keys (default ports match `config.toml`):
+
+| Role | Default port | Model keys |
+| --- | --- | --- |
+| **orchestrator** | 7471 | `qwen3-4b`, `gemma-4-e2b` |
+| **agent** | 7472 | `qwen3-14b`, `nemotron-30b`, `gemma-4-31b`, `gpt-oss-20b` |
+| **judge** | 7473 | `nemotron-super-120b`, `gpt-oss-120b` |
+
+The orchestrator slot is dormant for one-shot collection, so only the
+**agent** and **judge** need to be up. Each role can alternatively be
+served via `openai` or `openrouter` by editing the matching
+`[llm.<role>]` section in `config.toml` (providers: `vllm` | `openai` |
+`openrouter` — Anthropic is not supported here).
+
+```bash
+# Agent (matches [llm.agent] in config.toml)
+./scripts/deploy_model.sh -m qwen3-14b -d 0,1
+
+# Judge (matches [llm.judge] in config.toml)
+./scripts/deploy_model.sh -m gpt-oss-120b -d 2,3,4,5
+```
+
+Sanity-check each vLLM server with `python scripts/ping_model.py`
+(tool-calling) and `python scripts/reason_model.py` (reasoning parser).
+
+### 4. Run one-shot collection on `train_300`
+
+```bash
+python scripts/run_oneshot.py --dataset train_300 --split train --max-tasks 300
+```
+
+Outputs land under
+`results/train_300_train/<question_id>/<run_id>/schemaN{,_trace}.json`,
+with the frozen run config at `results_configs/<run_id>.json`.
+
 ## Layout
 
 ```
