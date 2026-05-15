@@ -15,8 +15,13 @@ collection on `train_300` (150 NQ + 150 HotPotQA).
 ### 1. Build the train dataset
 
 ```bash
+# Build small test datasets
 python scripts/build_train.py
 # data/train_300/train.jsonl, data/train_4/train.jsonl, data/train_hp_300/train.jsonl
+
+# Build full 1k datasets
+python scripts/build_1000_corpus.py
+# data/hotpotqa/train.jsonl, data/hotpotqa/test.jsonl, data/nq/train.jsonl, data/nq/test.jsonl
 ```
 
 ### 2. Start the corpus server
