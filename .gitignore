@@ -1,5 +1,6 @@
 .*cache/
 .env
-data/
+*data*/
 results*/
 .claude*/
+*.zip
